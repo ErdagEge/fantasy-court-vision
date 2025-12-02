@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Plus } from 'lucide-react';
-import clsx from 'clsx';
 
 export default function TeamSearch({ allPlayers, onSelect, myTeamIds }) {
   const [query, setQuery] = useState('');
