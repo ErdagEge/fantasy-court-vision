@@ -6,7 +6,7 @@ import rawData from '../data/nba_stats.json';
 import { processPlayerData } from '../utils/fantasyLogic';
 
 export default function MyTeam({ puntedCategories, myTeam, setMyTeam, togglePunt }) { // Accept togglePunt prop
-  const [previewPlayer, setPreviewPlayer] = useState(null);
+  const [lastAddedPlayerId, setLastAddedPlayerId] = useState(null);
 
   // 1. Process all players with current punt settings
   // We need this to get accurate Z-scores for the roster
@@ -19,33 +19,16 @@ export default function MyTeam({ puntedCategories, myTeam, setMyTeam, togglePunt
     return allRankedPlayers.filter(p => myTeam.includes(p.id));
   }, [allRankedPlayers, myTeam]);
 
-  // 3. Handle Preview Player (needs to be the processed version)
-  const processedPreviewPlayer = useMemo(() => {
-    if (!previewPlayer) return null;
-    return allRankedPlayers.find(p => p.id === previewPlayer.id);
-  }, [previewPlayer, allRankedPlayers]);
-
-
   const handleAddPlayer = (player) => {
-    setPreviewPlayer(player);
-  };
-
-  const confirmAdd = () => {
-    if (previewPlayer) {
-      setMyTeam(prev => [...prev, previewPlayer.id]);
-      setPreviewPlayer(null);
-    }
-  };
-
-  const cancelPreview = () => {
-    setPreviewPlayer(null);
+    setMyTeam(prev => [...prev, player.id]);
+    setLastAddedPlayerId(player.id);
   };
 
   const removePlayer = (playerId) => {
     setMyTeam(prev => prev.filter(id => id !== playerId));
-    // If we remove a player that was the preview (edge case), clear preview
-    if (previewPlayer && previewPlayer.id === playerId) {
-      setPreviewPlayer(null);
+    // If we remove the recently added player, optional cleanup (not strictly necessary but cleaner)
+    if (lastAddedPlayerId === playerId) {
+      setLastAddedPlayerId(null);
     }
   };
 
@@ -70,9 +53,7 @@ export default function MyTeam({ puntedCategories, myTeam, setMyTeam, togglePunt
         players={rosterPlayers}
         puntedCategories={puntedCategories}
         onRemove={removePlayer}
-        previewPlayer={processedPreviewPlayer}
-        onConfirmAdd={confirmAdd}
-        onCancelPreview={cancelPreview}
+        highlightId={lastAddedPlayerId}
       />
     </div>
   );
