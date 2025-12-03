@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import clsx from 'clsx';
 import { CATEGORIES } from '../utils/fantasyLogic';
-import { X, UserPlus, Trash2 } from 'lucide-react';
+import { Trash2, UserPlus } from 'lucide-react';
 
 const getHeatmapColor = (zScore) => {
   if (zScore > 2.0) return 'bg-emerald-500 text-white'; // Elite
@@ -16,32 +16,24 @@ const getHeatmapColor = (zScore) => {
 // Helper to format number
 const fmt = (num, decimals = 1) => Number(num).toFixed(decimals);
 
-export default function RosterTable({ players, puntedCategories, onRemove, previewPlayer, onConfirmAdd, onCancelPreview }) {
-
-  // Combine current roster + preview player for display
-  const displayPlayers = useMemo(() => {
-    if (previewPlayer) {
-      return [previewPlayer, ...players];
-    }
-    return players;
-  }, [players, previewPlayer]);
+export default function RosterTable({ players, puntedCategories, onRemove, highlightId }) {
 
   // Calculate Averages for the Summary Row
   const teamAverages = useMemo(() => {
-    if (displayPlayers.length === 0) return null;
+    if (players.length === 0) return null;
 
     const sums = {};
     Object.keys(CATEGORIES).forEach(cat => sums[cat] = 0);
     let totalValueSum = 0;
 
-    displayPlayers.forEach(p => {
+    players.forEach(p => {
       Object.keys(CATEGORIES).forEach(cat => {
         sums[cat] += p.zScores[cat];
       });
       totalValueSum += p.totalValue;
     });
 
-    const count = displayPlayers.length;
+    const count = players.length;
     const averages = {};
     Object.keys(CATEGORIES).forEach(cat => {
       averages[cat] = sums[cat] / count;
@@ -51,7 +43,7 @@ export default function RosterTable({ players, puntedCategories, onRemove, previ
       zScores: averages,
       totalValue: totalValueSum / count
     };
-  }, [displayPlayers]);
+  }, [players]);
 
   return (
     <div className="bg-slate-800 rounded-lg shadow-lg border border-slate-700 overflow-hidden">
@@ -78,25 +70,25 @@ export default function RosterTable({ players, puntedCategories, onRemove, previ
             </tr>
           </thead>
           <tbody>
-            {displayPlayers.length > 0 ? (
+            {players.length > 0 ? (
               <>
-                {displayPlayers.map((player, index) => {
-                   const isPreview = previewPlayer && player.id === previewPlayer.id;
+                {players.map((player, index) => {
+                   const isHighlighted = highlightId && player.id === highlightId;
 
                    return (
                     <tr
                       key={player.id}
                       className={clsx(
                         "border-b border-slate-700/50 transition-colors",
-                        isPreview ? "bg-emerald-900/20 border-emerald-500/50" : "hover:bg-slate-700/50"
+                        isHighlighted ? "bg-emerald-900/20 border-emerald-500/50" : "hover:bg-slate-700/50"
                       )}
                     >
                       <td className="px-4 py-3 font-mono text-slate-500">
-                        {isPreview ? <span className="text-emerald-400 text-xs font-bold uppercase">New</span> : index + (previewPlayer ? 0 : 1)}
+                        {isHighlighted ? <span className="text-emerald-400 text-xs font-bold uppercase">New</span> : index + 1}
                       </td>
                       <td className="px-4 py-3 font-medium text-white">
                         <div className="flex flex-col">
-                          <span className={clsx(isPreview && "text-emerald-400 font-bold")}>{player.name}</span>
+                          <span className={clsx(isHighlighted && "text-emerald-400 font-bold")}>{player.name}</span>
                           <span className="text-xs text-slate-500">{player.team} • {player.gp} GP</span>
                         </div>
                       </td>
@@ -117,24 +109,6 @@ export default function RosterTable({ players, puntedCategories, onRemove, previ
                        {player.totalValue > 0 ? '+' : ''}{fmt(player.totalValue, 2)}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {isPreview ? (
-                          <div className="flex justify-center gap-2">
-                            <button
-                              onClick={onConfirmAdd}
-                              className="p-1.5 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white transition-colors"
-                              title="Confirm Add"
-                            >
-                              <UserPlus className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={onCancelPreview}
-                              className="p-1.5 rounded-md bg-rose-500 hover:bg-rose-600 text-white transition-colors"
-                              title="Cancel"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ) : (
                           <button
                             onClick={() => onRemove(player.id)}
                             className="p-1.5 rounded-md text-slate-400 hover:text-rose-400 hover:bg-rose-900/20 transition-colors"
@@ -142,7 +116,6 @@ export default function RosterTable({ players, puntedCategories, onRemove, previ
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
-                        )}
                       </td>
                     </tr>
                   );
